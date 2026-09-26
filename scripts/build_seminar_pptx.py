@@ -7,27 +7,28 @@ from pptx import Presentation
 from pptx.dml.color import RGBColor
 from pptx.enum.shapes import MSO_SHAPE
 from pptx.enum.text import PP_ALIGN
-from pptx.oxml.ns import nsmap
-from pptx.oxml.xmlchemy import OxmlElement
-from pptx.util import Emu, Inches, Pt
+from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT = ROOT / "ResumeFit-Seminar.pptx"
 LOGO = ROOT / "src" / "assets" / "logo.png"
+MUSIC = ROOT / "docs" / "seminar-music.mp3"
+GEMINI_DOCS_SHOT = ROOT / "docs" / "gemini-api-key-docs.png"
+
+GEMINI_KEY_URL = "https://aistudio.google.com/apikey"
+GEMINI_DOCS_URL = "https://ai.google.dev/gemini-api/docs/api-key"
+GEMINI_QUICKSTART_URL = "https://ai.google.dev/gemini-api/docs/quickstart"
 
 NAVY = RGBColor(0x0F, 0x17, 0x2A)
 BLUE = RGBColor(0x25, 0x63, 0xEB)
 BLUE_DARK = RGBColor(0x1D, 0x4E, 0xD8)
 SLATE = RGBColor(0x47, 0x55, 0x69)
-MUTED = RGBColor(0x64, 0x74, 0x8B)
 WHITE = RGBColor(0xFF, 0xFF, 0xFF)
 BG = RGBColor(0xF3, 0xF6, 0xFB)
-CARD = RGBColor(0xFF, 0xFF, 0xFF)
-LINE = RGBColor(0xE2, 0xE8, 0xF0)
-GREEN = RGBColor(0x05, 0x96, 0x69)
-AMBER = RGBColor(0xD9, 0x77, 0x06)
-RED = RGBColor(0xDC, 0x26, 0x26)
 LIGHT_BLUE = RGBColor(0xEE, 0xF3, 0xFF)
+GOLD = RGBColor(0xD9, 0x77, 0x06)
+SILVER = RGBColor(0x64, 0x74, 0x8B)
+BRONZE = RGBColor(0xB4, 0x53, 0x09)
 
 W = Inches(13.333)
 H = Inches(7.5)
@@ -39,22 +40,6 @@ def _set_run(run, text, size=20, bold=False, color=NAVY, font="Calibri"):
     run.font.bold = bold
     run.font.color.rgb = color
     run.font.name = font
-
-
-def add_text(box, text, size=20, bold=False, color=NAVY, align=PP_ALIGN.LEFT):
-    tf = box.text_frame
-    tf.word_wrap = True
-    p = tf.paragraphs[0]
-    p.alignment = align
-    _set_run(p.add_run() if p.runs else p.runs[0] if False else __import__("pptx.util", fromlist=["x"]), text, size, bold, color)
-
-
-def set_para(p, text, size=20, bold=False, color=NAVY, align=PP_ALIGN.LEFT, space_after=8):
-    p.clear()
-    p.alignment = align
-    p.space_after = Pt(space_after)
-    run = p.add_run()
-    _set_run(run, text, size, bold, color)
 
 
 def fill(shape, color):
@@ -80,7 +65,6 @@ def textbox(slide, l, t, w, h):
 
 
 def write_box(slide, l, t, w, h, lines, default_size=20):
-    """lines: list of str or (text, size, bold, color)."""
     box = textbox(slide, l, t, w, h)
     tf = box.text_frame
     tf.word_wrap = True
@@ -97,13 +81,12 @@ def write_box(slide, l, t, w, h, lines, default_size=20):
     return box
 
 
-def footer(slide, page, total=26):
-    bar = rect(slide, 0, Inches(7.22), W, Inches(0.28), NAVY)
+def footer(slide, page, total):
+    rect(slide, 0, Inches(7.22), W, Inches(0.28), NAVY)
     box = textbox(slide, Inches(0.4), Inches(7.22), Inches(10), Inches(0.28))
-    tf = box.text_frame
-    p = tf.paragraphs[0]
+    p = box.text_frame.paragraphs[0]
     run = p.add_run()
-    _set_run(run, "ResumeFit  ·  seminar", 11, False, WHITE)
+    _set_run(run, "ResumeFit  ·  TEQGRID seminar", 11, False, WHITE)
     num = textbox(slide, Inches(11.6), Inches(7.22), Inches(1.4), Inches(0.28))
     p = num.text_frame.paragraphs[0]
     p.alignment = PP_ALIGN.RIGHT
@@ -119,6 +102,30 @@ def blank(prs):
     return prs.slides.add_slide(prs.slide_layouts[6])
 
 
+def add_music(slide, light=False):
+    """Speaker icon that plays the seminar bed when clicked."""
+    if not MUSIC.exists():
+        return
+    poster = str(LOGO) if LOGO.exists() else None
+    try:
+        slide.shapes.add_movie(
+            str(MUSIC),
+            Inches(12.35),
+            Inches(0.18),
+            Inches(0.62),
+            Inches(0.62),
+            poster_frame_image=poster,
+            mime_type="audio/mp3",
+        )
+    except Exception:
+        pass
+    hint = textbox(slide, Inches(10.7), Inches(0.28), Inches(1.55), Inches(0.4))
+    p = hint.text_frame.paragraphs[0]
+    p.alignment = PP_ALIGN.RIGHT
+    run = p.add_run()
+    _set_run(run, "♪  play", 12, True, WHITE if light else BLUE)
+
+
 def title_slide(prs):
     s = blank(prs)
     rect(s, 0, 0, W, H, NAVY)
@@ -128,19 +135,22 @@ def title_slide(prs):
     write_box(
         s,
         Inches(0.7),
-        Inches(2.15),
+        Inches(2.05),
         Inches(12),
-        Inches(3.4),
+        Inches(4.2),
         [
-            ("HANDS-ON SEMINAR", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
+            ("TEQGRID  ·  HANDS-ON SEMINAR", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
             ("ResumeFit", 54, True, WHITE),
             ("Match a resume to a job with a real AI API", 26, False, RGBColor(0xCB, 0xD5, 0xE1)),
-            ("React Native + Google Gemini (free)", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
+            ("React Native + Google Gemini  ·  live on a phone", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
+            ("Click ♪ on this slide for music", 16, False, RGBColor(0x93, 0xC5, 0xFD)),
         ],
     )
+    add_music(s, light=True)
+    return s
 
 
-def section_slide(prs, kicker, title, time_label, page, total):
+def section_slide(prs, kicker, title, time_label, page, total, music=False):
     s = blank(prs)
     rect(s, 0, 0, W, H, NAVY)
     rect(s, 0, 0, Inches(0.18), H, BLUE)
@@ -156,22 +166,24 @@ def section_slide(prs, kicker, title, time_label, page, total):
             (title, 40, True, WHITE),
         ],
     )
+    if music:
+        add_music(s, light=True)
     footer(s, page, total)
 
 
-def content_slide(prs, kicker, title, bullets, page, total, note=None):
+def content_slide(prs, kicker, title, bullets, page, total, note=None, music=False):
     s = blank(prs)
     rect(s, 0, 0, W, H, BG)
     accent_bar(s)
     write_box(s, Inches(0.55), Inches(0.28), Inches(12), Inches(0.35), [(kicker.upper(), 13, True, BLUE)])
     write_box(s, Inches(0.55), Inches(0.58), Inches(12.2), Inches(0.7), [(title, 30, True, NAVY)])
-    lines = []
-    for b in bullets:
-        lines.append((f"  {b}", 20, False, SLATE))
+    lines = [(f"  {b}", 20, False, SLATE) for b in bullets]
     write_box(s, Inches(0.55), Inches(1.45), Inches(12.2), Inches(5.2 if not note else 4.4), lines)
     if note:
-        card = round_rect(s, Inches(0.55), Inches(6.15), Inches(12.2), Inches(0.85), LIGHT_BLUE)
+        round_rect(s, Inches(0.55), Inches(6.15), Inches(12.2), Inches(0.85), LIGHT_BLUE)
         write_box(s, Inches(0.75), Inches(6.28), Inches(11.8), Inches(0.65), [(note, 16, True, BLUE_DARK)])
+    if music:
+        add_music(s)
     footer(s, page, total)
     return s
 
@@ -205,8 +217,7 @@ def two_col(prs, kicker, title, left_title, left_items, right_title, right_items
     footer(s, page, total)
 
 
-def cards_slide(prs, kicker, title, cards, page, total):
-    """cards: list of (title, body) length 3 or 4."""
+def cards_slide(prs, kicker, title, cards, page, total, music=False):
     s = blank(prs)
     rect(s, 0, 0, W, H, BG)
     accent_bar(s)
@@ -227,7 +238,218 @@ def cards_slide(prs, kicker, title, cards, page, total):
         p.alignment = PP_ALIGN.CENTER
         run = p.add_run()
         _set_run(run, str(i + 1), 14, True, WHITE)
-        write_box(s, x + Inches(0.25), Inches(2.35), cw - Inches(0.5), Inches(4.2), [(ct, 20, True, NAVY), (cb, 16, False, SLATE)])
+        write_box(
+            s,
+            x + Inches(0.25),
+            Inches(2.35),
+            cw - Inches(0.5),
+            Inches(4.2),
+            [(ct, 20, True, NAVY), (cb, 16, False, SLATE)],
+        )
+    if music:
+        add_music(s)
+    footer(s, page, total)
+
+
+def add_link(slide, l, t, w, h, label, url):
+    """Clickable URL chip — opens the official page from PowerPoint."""
+    shape = round_rect(slide, l, t, w, h, LIGHT_BLUE)
+    try:
+        shape.click_action.hyperlink.address = url
+    except Exception:
+        pass
+    box = textbox(slide, l + Inches(0.1), t + Inches(0.08), w - Inches(0.2), h - Inches(0.1))
+    tf = box.text_frame
+    tf.word_wrap = True
+    p = tf.paragraphs[0]
+    p.alignment = PP_ALIGN.CENTER
+    run = p.add_run()
+    _set_run(run, label, 12, True, BLUE_DARK)
+    try:
+        run.hyperlink.address = url
+    except Exception:
+        pass
+    return shape
+
+
+def flow_box(slide, l, t, w, h, title, subtitle, fill_color=WHITE, title_color=NAVY):
+    round_rect(slide, l, t, w, h, fill_color)
+    write_box(
+        slide,
+        l + Inches(0.1),
+        t + Inches(0.08),
+        w - Inches(0.2),
+        h - Inches(0.14),
+        [(title, 13, True, title_color), (subtitle, 11, False, SLATE)],
+    )
+
+
+def arrow_right(slide, l, t):
+    shape = slide.shapes.add_shape(MSO_SHAPE.RIGHT_ARROW, l, t, Inches(0.26), Inches(0.16))
+    fill(shape, BLUE)
+    return shape
+
+
+def arrow_down(slide, l, t):
+    shape = slide.shapes.add_shape(MSO_SHAPE.DOWN_ARROW, l, t, Inches(0.16), Inches(0.24))
+    fill(shape, BLUE)
+    return shape
+
+
+def arrow_left(slide, l, t):
+    shape = slide.shapes.add_shape(MSO_SHAPE.LEFT_ARROW, l, t, Inches(0.26), Inches(0.16))
+    fill(shape, BLUE)
+    return shape
+
+
+def rn_cycle_slide(prs, page, total):
+    """Boot + analyze cycle that matches the current ResumeFit files."""
+    s = blank(prs)
+    rect(s, 0, 0, W, H, BG)
+    accent_bar(s)
+    write_box(s, Inches(0.55), Inches(0.22), Inches(12), Inches(0.3), [("04  ·  THIS CODE", 13, True, BLUE)])
+    write_box(
+        s,
+        Inches(0.55),
+        Inches(0.48),
+        Inches(12.2),
+        Inches(0.5),
+        [("React Native app cycle — ResumeFit as it is wired today", 24, True, NAVY)],
+    )
+
+    boot = [
+        ("1  Native boot", "iOS / Android looks up app.json name ResumeFit"),
+        ("2  index.js", "AppRegistry.registerComponent → App"),
+        ("3  App.tsx", "GestureHandler + SafeArea + navigator"),
+        ("4  navigation", "Stack: Home first, then Result"),
+    ]
+    analyze = [
+        ("5  HomeScreen", "onPickResume + paste JD + onAnalyze"),
+        ("6  pick + base64", "pickResume.ts then uriToBase64(pdf)"),
+        ("7  gemini.ts", "POST generateContent  ·  Flash Lite JSON"),
+        ("8  ResultScreen", "Draws the JSON only. Does not re-score."),
+    ]
+    left = Inches(0.45)
+    bw = Inches(2.85)
+    gap = Inches(0.38)
+    y1 = Inches(1.15)
+    y2 = Inches(3.55)
+    for i, (title, sub) in enumerate(boot):
+        x = left + i * (bw + gap)
+        flow_box(s, x, y1, bw, Inches(1.55), title, sub, WHITE, BLUE)
+        if i < 3:
+            arrow_right(s, x + bw + Inches(0.06), y1 + Inches(0.68))
+    arrow_down(s, left + 3 * (bw + gap) + bw / 2 - Inches(0.08), Inches(2.82))
+    for i, (title, sub) in enumerate(analyze):
+        x = left + (3 - i) * (bw + gap)
+        fill_c = LIGHT_BLUE if i == 2 else WHITE
+        flow_box(s, x, y2, bw, Inches(1.55), title, sub, fill_c, BLUE if i == 2 else NAVY)
+        if i < 3:
+            dest_x = left + (2 - i) * (bw + gap)
+            arrow_left(s, dest_x + bw + Inches(0.06), y2 + Inches(0.68))
+    write_box(
+        s,
+        Inches(0.45),
+        Inches(5.42),
+        Inches(12.4),
+        Inches(1.55),
+        [
+            ("Live path in this repo", 14, True, NAVY),
+            (
+                "HomeScreen.onAnalyze → uriToBase64 + analyzeResumeMatch (src/api/gemini.ts) → navigation.navigate('Result', { analysis }).",
+                14,
+                False,
+                SLATE,
+            ),
+            (
+                "Key files: index.js · App.tsx · src/navigation/index.tsx · HomeScreen.tsx · pickResume.ts · gemini.ts · ResultScreen.tsx · .env",
+                13,
+                False,
+                SLATE,
+            ),
+        ],
+    )
+    footer(s, page, total)
+
+
+def gemini_key_diagram_slide(prs, page, total):
+    """Official Gemini key steps + docs screenshot + clickable URLs."""
+    s = blank(prs)
+    rect(s, 0, 0, W, H, BG)
+    accent_bar(s)
+    write_box(s, Inches(0.55), Inches(0.2), Inches(12), Inches(0.28), [("05  ·  GOOGLE AI STUDIO", 13, True, BLUE)])
+    write_box(
+        s,
+        Inches(0.55),
+        Inches(0.44),
+        Inches(12.2),
+        Inches(0.42),
+        [("Gemini key — official steps (click the blue chips)", 22, True, NAVY)],
+    )
+
+    steps = [
+        ("1", "Sign in with a Google account"),
+        ("2", "Open aistudio.google.com/apikey"),
+        ("3", "Create API key  ·  pick / create a Cloud project"),
+        ("4", "Copy the key once  ·  treat it like a password"),
+        ("5", "cp .env.example .env   then   GEMINI_API_KEY=…"),
+        ("6", "Restart Metro  ·  never commit .env"),
+    ]
+    y = Inches(0.95)
+    for num, text in steps:
+        badge = s.shapes.add_shape(MSO_SHAPE.OVAL, Inches(0.5), y, Inches(0.36), Inches(0.36))
+        fill(badge, BLUE)
+        tb = textbox(s, Inches(0.5), y + Inches(0.02), Inches(0.36), Inches(0.32))
+        p = tb.text_frame.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        _set_run(run, num, 13, True, WHITE)
+        round_rect(s, Inches(0.98), y - Inches(0.04), Inches(6.15), Inches(0.46), WHITE)
+        write_box(s, Inches(1.12), y, Inches(5.9), Inches(0.38), [(text, 14, False, SLATE)])
+        if num != "6":
+            arrow_down(s, Inches(0.6), y + Inches(0.36))
+        y += Inches(0.58)
+
+    if GEMINI_DOCS_SHOT.exists():
+        s.shapes.add_picture(str(GEMINI_DOCS_SHOT), Inches(7.35), Inches(0.95), Inches(5.5), Inches(3.85))
+        write_box(
+            s,
+            Inches(7.35),
+            Inches(4.82),
+            Inches(5.5),
+            Inches(0.35),
+            [("Official docs screenshot  ·  ai.google.dev", 11, False, SLATE)],
+        )
+    else:
+        round_rect(s, Inches(7.35), Inches(0.95), Inches(5.5), Inches(3.85), WHITE)
+        write_box(
+            s,
+            Inches(7.55),
+            Inches(2.3),
+            Inches(5.1),
+            Inches(1.2),
+            [("Open the docs URL below for the live Create API key page.", 16, False, SLATE)],
+        )
+
+    add_link(s, Inches(7.35), Inches(5.2), Inches(5.5), Inches(0.42), "Create key  →  aistudio.google.com/apikey", GEMINI_KEY_URL)
+    add_link(s, Inches(7.35), Inches(5.7), Inches(2.65), Inches(0.42), "API key docs", GEMINI_DOCS_URL)
+    add_link(s, Inches(10.2), Inches(5.7), Inches(2.65), Inches(0.42), "Quickstart", GEMINI_QUICKSTART_URL)
+
+    write_box(
+        s,
+        Inches(0.5),
+        Inches(6.22),
+        Inches(12.3),
+        Inches(0.8),
+        [
+            (
+                "Never paste the key in Slack, GitHub, or this deck. Classroom demo keeps it in .env on the phone. Play Store → put the key on YOUR server.",
+                13,
+                False,
+                SLATE,
+            ),
+        ],
+    )
     footer(s, page, total)
 
 
@@ -235,7 +457,7 @@ def build():
     prs = Presentation()
     prs.slide_width = W
     prs.slide_height = H
-    total = 26
+    total = 24
 
     title_slide(prs)
 
@@ -244,67 +466,87 @@ def build():
     rect(s, 0, 0, W, H, BG)
     accent_bar(s)
     write_box(s, Inches(0.55), Inches(0.28), Inches(12), Inches(0.35), [("TODAY", 13, True, BLUE)])
-    write_box(s, Inches(0.55), Inches(0.58), Inches(12), Inches(0.6), [("Seven blocks.", 30, True, NAVY)])
+    write_box(s, Inches(0.55), Inches(0.58), Inches(12), Inches(0.6), [("How we will run this room", 28, True, NAVY)])
     rows = [
-        ("0–5", "Why this app", "A feature, not ChatGPT"),
-        ("5–12", "How an AI API works", "URL, key, request, response"),
-        ("12–22", "Prompt engineering", "Role, constraints, JSON contract"),
-        ("22–32", "Live code walkthrough", "3 files only"),
-        ("32–45", "Live demo", "PDF + JD → score"),
-        ("45–52", "Architecture", "Honest: no backend today"),
-        ("52–60", "Q&A", "Your questions"),
+        ("01", "My intro", "Who is teaching today"),
+        ("02", "TEQGRID intro", "Why we are here"),
+        ("03", "Project intro", "What ResumeFit does"),
+        ("04", "React Native structure", "How a phone app is wired"),
+        ("05", "Google API key", "Create your own Gemini key"),
+        ("06", "How the app works", "PDF + JD → score"),
+        ("07", "Student Q&A", "Your questions"),
+        ("08", "10-question quiz", "Top 3 win"),
+        ("09", "Thank you", "♪ music on title, quiz, winners"),
     ]
-    y = Inches(1.4)
+    y = Inches(1.28)
     for t, name, why in rows:
-        round_rect(s, Inches(0.5), y, Inches(12.3), Inches(0.72), WHITE)
-        write_box(s, Inches(0.7), y + Inches(0.14), Inches(1.4), Inches(0.45), [(t, 16, True, BLUE)])
-        write_box(s, Inches(2.2), y + Inches(0.14), Inches(4.8), Inches(0.45), [(name, 18, True, NAVY)])
-        write_box(s, Inches(7.2), y + Inches(0.14), Inches(5.3), Inches(0.45), [(why, 16, False, SLATE)])
-        y += Inches(0.78)
+        round_rect(s, Inches(0.5), y, Inches(12.3), Inches(0.58), WHITE)
+        write_box(s, Inches(0.7), y + Inches(0.1), Inches(1.1), Inches(0.4), [(t, 15, True, BLUE)])
+        write_box(s, Inches(2.0), y + Inches(0.1), Inches(4.6), Inches(0.4), [(name, 16, True, NAVY)])
+        write_box(s, Inches(6.8), y + Inches(0.1), Inches(5.7), Inches(0.4), [(why, 15, False, SLATE)])
+        y += Inches(0.62)
+    add_music(s)
     footer(s, 2, total)
 
-    cards_slide(
+    # 3 my intro
+    two_col(
         prs,
-        "Outcomes",
-        "You will leave with 3 skills",
+        "01  ·  speaker",
+        "Hi — I am Aishwarya Rastogi",
+        "Who I am",
         [
-            ("Call a real AI API", "URL + key + JSON body. Same idea as a weather API — the reply is text we force into JSON."),
-            ("Write a product prompt", "Role, task, guardrails, and an output contract the UI can render."),
-            ("Show it on a phone", "React Native screens that display score, chips, and 3 edits. No fake data."),
+            "Aishwarya Rastogi",
+            "React Native developer",
+            "I ship small phone apps with real APIs",
+            "No mock screens for this seminar",
+            "",
+            "Today I will teach from a live app",
+            "on a real iPhone — ResumeFit.",
+        ],
+        "How I will teach",
+        [
+            "One idea → one file → one question",
+            "We will not open 20 files",
+            "You will see: input, API, result",
+            "",
+            "Ask anytime. Wrong answers are useful.",
+            "The quiz at the end uses this talk.",
         ],
         3,
         total,
     )
 
-    section_slide(prs, "Block 1", "AI in a product is a feature", "0–5 minutes", 4, total)
-
+    # 4 teqgrid
     content_slide(
         prs,
-        "0–5 min  ·  why",
-        "ChatGPT in a browser is not a product",
+        "02  ·  TEQGRID",
+        "Why TEQGRID brought you here",
         [
-            "• A product is: user gives input  →  your app calls an API  →  user sees a result they can use.",
-            "• We are not training a model. We are calling one.",
-            "• Weather API returns temperature. Gemini returns text. We force that text to be JSON.",
-            "• Today’s feature: does this resume match this job?",
+            "• TEQGRID trains builders — not slide readers.",
+            "• Line we use in production: frontend → backend → AI.",
+            "• Today you learn the AI middle: a phone calls Gemini and shows JSON.",
+            "• A backend would hide the key. We skip it so you can see the full feature.",
+            "• Goal: leave able to clone, paste your key, and change one prompt line.",
+            "• Participation is the point. The quiz is how we pick the top 3.",
         ],
-        5,
+        4,
         total,
-        "Ask the room: what two inputs does this feature need?  Wait for: resume PDF + job description.",
+        "If TEQGRID is issuing certificates, mention that after the winners slide.",
     )
 
+    # 5 project intro
     two_col(
         prs,
-        "0–5 min  ·  the app",
+        "03  ·  project",
         "ResumeFit — a junior recruiter on a phone",
-        "On the Home screen",
+        "The product",
         [
-            "1. Upload resume (PDF, 5 MB)",
-            "2. Paste job description",
-            "3. Tap Analyze match",
+            "Upload a PDF resume",
+            "Paste a job description",
+            "Tap Analyze match",
             "",
-            "Do not tap Analyze yet.",
-            "Curiosity first.",
+            "Gemini reads both",
+            "You get a score you can argue with",
         ],
         "What comes back",
         [
@@ -313,142 +555,130 @@ def build():
             "Missing skills (red chips)",
             "Experience alignment",
             "3 concrete resume edits",
+            "",
+            "React Native CLI — not Expo",
+        ],
+        5,
+        total,
+    )
+
+    content_slide(
+        prs,
+        "03  ·  project",
+        "This is a feature, not ChatGPT in a browser",
+        [
+            "• User gives input → our app calls an API → user sees a usable result.",
+            "• We are not training a model. We are calling one.",
+            "• Weather API returns temperature. Gemini returns text. We force JSON.",
+            "• Two inputs only: resume PDF + job description.",
+            "• No fake analysis. If the key or the model fails, you see the real error.",
         ],
         6,
         total,
+        "Ask: what two inputs does this feature need? Wait for: PDF + JD.",
     )
 
-    section_slide(prs, "Block 2", "How an AI API actually works", "5–12 minutes", 7, total)
+    # 7-8 RN structure
+    section_slide(prs, "04", "How a React Native app is structured", "Application working structure", 7, total)
 
-    content_slide(
+    cards_slide(
         prs,
-        "5–12 min  ·  six words",
-        "Memorize these six words",
+        "04  ·  React Native",
+        "One JavaScript/TypeScript app → two phones",
         [
-            "• URL — the doorbell. gemini-2.0-flash + generateContent",
-            "• Key — a password for the API. Lives in .env. Never commit it.",
-            "• Request — JSON body with contents → parts",
-            "• Response — candidates[0].content.parts[0].text",
-            "• Error — show Google’s real message. Quota, bad key, safety.",
-            "• Quota — free APIs are not unlimited. 40 people on one key = 429.",
+            ("JS / TS layer", "Screens, state, fetch(). HomeScreen and ResultScreen live here. Same code for iOS and Android."),
+            ("Native layer", "iOS (Swift + Xcode) and Android (Kotlin + Gradle) host the JS. Camera, files, splash, icon."),
+            ("Metro", "Dev server on your Mac. The phone loads index.js from 8081. Change JS → Fast Refresh."),
         ],
         8,
         total,
-        "Open only src/api/gemini.ts  →  jump to analyzeResumeMatch.",
-    )
-
-    two_col(
-        prs,
-        "5–12 min  ·  analogy",
-        "Think of the API call as a letter",
-        "The letter",
-        [
-            "Address = URL",
-            "Stamp / ID = API key",
-            "Body = prompt + PDF",
-            "Reply = JSON",
-        ],
-        "The two parts in one message",
-        [
-            "text = instructions + job description",
-            "inline_data = the PDF",
-            "   mime_type: application/pdf",
-            "   data: <base64>",
-            "",
-            "Like WhatsApp: caption + document.",
-        ],
-        9,
-        total,
     )
 
     content_slide(
         prs,
-        "5–12 min  ·  flow",
+        "04  ·  React Native",
+        "Folders you will actually open today",
+        [
+            "• App.tsx + src/navigation — which screen is showing",
+            "• src/screens/HomeScreen.tsx — pick PDF, paste JD, tap Analyze",
+            "• src/screens/ResultScreen.tsx — dumb UI. It only draws JSON.",
+            "• src/api/pickResume.ts — system file picker, PDF only",
+            "• src/api/gemini.ts — URL, key, prompt, fetch, parse",
+            "• .env — GEMINI_API_KEY. Never commit this file.",
+            "• ios/ and android/ — splash, icons, signing. Rebuild after native changes.",
+        ],
+        9,
+        total,
+        "Stay in 3 files for the live walk: pickResume.ts, gemini.ts, HomeScreen.tsx.",
+    )
+
+    rn_cycle_slide(prs, 10, total)
+
+    # 11-13 API key
+    section_slide(prs, "05", "Generate a Google Gemini API key", "Free key  ·  4 minutes", 11, total)
+
+    content_slide(
+        prs,
+        "05  ·  Google AI Studio",
+        "Create your own key — do not share one room key",
+        [
+            "1. Open https://aistudio.google.com/apikey  (Google account).",
+            "2. Click Create API key. Pick or create a Google Cloud project if asked.",
+            "3. Copy the key once. Treat it like a password.",
+            "4. In the project:  cp .env.example .env",
+            "5. Paste:  GEMINI_API_KEY=your_key   (no quotes, no extra space).",
+            "6. Restart Metro. The app reads .env only at start.",
+            "7. If 40 people hammer one key you get 429 / quota. Each student = one key.",
+        ],
+        12,
+        total,
+        "This classroom key lives on the phone. Play Store? Put the key on YOUR server.",
+    )
+
+    gemini_key_diagram_slide(prs, 13, total)
+
+    # 14-17 how app works
+    section_slide(prs, "06", "How ResumeFit actually works", "The live path", 14, total)
+
+    content_slide(
+        prs,
+        "06  ·  flow",
         "What happens when they tap Analyze",
         [
             "1. Phone has a PDF + a job description",
             "2. App converts the PDF to base64 (JSON cannot carry a raw file)",
-            "3. POST to Gemini generateContent",
-            "4. Gemini reads both and returns JSON",
-            "5. Result screen only displays that JSON",
-            "",
-            "There is no backend in this demo. The phone talks to Google.",
+            "3. POST to Gemini generateContent  (gemini-3.1-flash-lite)",
+            "4. Prompt says: recruiter, be honest, do not invent skills, return this JSON",
+            "5. Gemini reads PDF + JD and returns score, chips, 3 edits",
+            "6. Result screen only displays that JSON — it does not re-score",
         ],
-        10,
+        15,
         total,
-        "Ask: if there is no backend, where does the key live? Why is that OK in class and bad on Play Store?",
+        "There is no backend today. The phone talks to Google.",
     )
-
-    section_slide(prs, "Block 3", "Prompt engineering is the AI skill", "12–22 minutes", 11, total)
 
     two_col(
         prs,
-        "12–22 min  ·  bad vs good",
-        "The model is not a resume product. It follows the prompt.",
-        "If we wrote…",
+        "06  ·  three files",
+        "The working path — do not rewrite the app",
+        "The letter",
         [
-            "“Analyze this resume”",
-            "   → a paragraph. No score. UI breaks.",
+            "Address = URL (generateContent)",
+            "Stamp / ID = API key",
+            "Body = prompt + PDF",
+            "Reply = JSON",
             "",
-            "“Give a score”",
-            "   → number, no skills.",
+            "text = instructions + job",
+            "inline_data = PDF as base64",
+        ],
+        "The files",
+        [
+            "pickResume.ts — picker, cancel = null",
+            "gemini.ts — key, parts, fetch, parse",
+            "HomeScreen.tsx — validate, load, navigate",
             "",
-            "“List skills”",
-            "   → invents React Native because the JD asked for it.",
-        ],
-        "Our prompt does 4 jobs",
-        [
-            "1. Role — you are a recruiter",
-            "2. Task — compare resume PDF to this JD",
-            "3. Constraints — be honest; don’t invent skills; if not a resume, score 0",
-            "4. Output contract — exact JSON keys the Result screen already uses",
-        ],
-        12,
-        total,
-    )
-
-    content_slide(
-        prs,
-        "12–22 min  ·  read it out loud",
-        "Every sentence in ANALYSIS_INSTRUCTION earns its place",
-        [
-            "• “You are a recruiter.” — role. Poet vs recruiter = different tone.",
-            "• “Compare this resume PDF to the job description.” — one job, not rewrite my CV.",
-            "• “Be honest.” — models like to please; otherwise everything is 90%.",
-            "• “If not a resume, matchPercent = 0.” — guardrail.",
-            "• “Do not invent skills.” — most important line. JD-only skills go in missingSkills.",
-            "• Exact JSON keys + “exactly 3 suggestedEdits.” — the UI is a form.",
-        ],
-        13,
-        total,
-        "Ask: if we delete “don’t invent skills,” what do the green chips start showing?",
-    )
-
-    content_slide(
-        prs,
-        "12–22 min  ·  knobs",
-        "Temperature and messy JSON",
-        [
-            "• temperature: 0.2 — 0 is rigid, 1 is creative. Scoring wants boring and repeatable.",
-            "• responseMimeType: application/json — we ask for JSON.",
-            "• parseModelJson still strips ```json fences. Models cheat. That is defensive engineering.",
-            "• We clamp matchPercent to 0–100 so a wild 140 cannot break the bar.",
-        ],
-        14,
-        total,
-        "Live 2-min tweak: change “recruiter” to “strict hiring manager.” Same API, different score. That IS prompt engineering.",
-    )
-
-    section_slide(prs, "Block 4", "Practical integration — 3 files", "22–32 minutes", 15, total)
-
-    cards_slide(
-        prs,
-        "22–32 min  ·  stay in three files",
-        "Do not rewrite the app. Walk the working path.",
-        [
-            ("pickResume.ts", "System file picker. PDF only. Cancel returns null — that is not an error. Copy into cache because picker URIs expire."),
-            ("gemini.ts", "Key → parts (text + inline_data) → fetch POST → error.message → parseModelJson."),
-            ("HomeScreen.tsx", "Four states: resume, jobDescription, error, loading. Validate, then uriToBase64 → analyze → navigate."),
+            "setLoading(true) before the network.",
+            "finally { setLoading(false) } always.",
         ],
         16,
         total,
@@ -456,150 +686,146 @@ def build():
 
     content_slide(
         prs,
-        "22–32 min  ·  HomeScreen",
-        "onAnalyze is the whole product recipe",
+        "06  ·  prompt",
+        "The model follows the prompt, not a magic HR API",
         [
-            "1. Is there a PDF?",
-            "2. Is there a job description?",
-            "3. Is there a GEMINI_API_KEY?",
-            "4. URI → base64",
-            "5. POST Gemini",
-            "6. Parse JSON",
-            "7. Go to Result",
-            "",
-            "setLoading(true) BEFORE the network. finally { setLoading(false) } even if Gemini throws.",
+            "• Role: you are a recruiter.",
+            "• Task: compare this resume PDF to this job description.",
+            "• Constraints: be honest; if not a resume, score 0; do not invent skills.",
+            "• Output contract: exact JSON keys the Result screen already uses.",
+            "• temperature 0.2 — scoring wants boring and repeatable.",
+            "• If green chips show skills that are not on the PDF, fix the prompt, not the CSS.",
         ],
         17,
         total,
-        "Ask: if you forget finally, what does the user see after an error? A stuck spinner.",
+        "Live tweak: change “recruiter” to “strict hiring manager.” Same API, different score.",
     )
 
-    section_slide(prs, "Block 5", "Live demonstration", "32–45 minutes", 18, total)
+    # 18 Q&A
+    section_slide(prs, "07", "Student Q&A", "Your turn", 18, total, music=True)
 
     content_slide(
         prs,
-        "32–45 min  ·  demo A",
-        "Narrate the data, not the animation",
+        "07  ·  Q&A",
+        "Ask anything. If the room is quiet, start here.",
         [
-            "1. Tap Upload resume → pick the sample PDF.",
-            "2. Tap Use sample or paste a real Naukri / LinkedIn JD.",
-            "3. Tap Analyze match. While it spins, say:",
-            "      PDF → base64 → leaving the phone → Gemini reads both → JSON → Result.",
-            "4. On Result, point in order: score → summary → alignment → matching chips",
-            "      → missing chips → 3 concrete edits.",
-            "5. Challenge the room: is that matching skill actually on the PDF?",
+            "• Why PDF, not Word?  —  one path; Gemini document understanding likes PDF.",
+            "• Why base64, not Drive?  —  Drive needs login. Base64 = one POST.",
+            "• Shared key for 40 students?  —  quota dies. Each person uses their own key.",
+            "• Is the score “true”?  —  no. Model opinion under our prompt.",
+            "• Match 3 jobs?  —  loop the same function three times.",
+            "• Scanned photo resume?  —  often yes. Prefer a real text PDF for the demo.",
         ],
         19,
         total,
-        "The UI is dumb on purpose. It displays JSON. Wrong score → fix the prompt, not the stylesheet.",
+        "Write one question on a slip if you do not want to speak.",
+        music=True,
     )
 
-    two_col(
+    # 20 quiz intro
+    section_slide(prs, "08", "10-question test", "Write A / B / C  ·  no phones", 20, total, music=True)
+
+    content_slide(
         prs,
-        "32–45 min  ·  if it breaks",
-        "Teach from the red banner. Do not skip failures.",
-        "You see",
+        "08  ·  quiz  1–5",
+        "Circle one letter. 30 seconds each.",
         [
-            "Missing GEMINI_API_KEY",
-            "API key not valid",
-            "Quota / 429",
-            "Could not parse JSON",
-            "matchPercent = 0 on an invoice PDF",
+            "1. ResumeFit needs which two inputs?   A Photo + recipes   B Resume PDF + job description   C Email + OTP",
+            "2. The Gemini key should live in?   A GitHub   B .env (not committed)   C The Result screen",
+            "3. Gemini must return what the UI can draw as?   A A video   B JSON   C An Excel file",
+            "4. We send the PDF as?   A Base64 inline_data   B A Drive link   C A screenshot",
+            "5. This classroom demo has?   A No backend   B A Node server   C A database",
         ],
-        "You say",
-        [
-            "Key not in .env, or Metro not restarted.",
-            "Wrong key, extra quotes, extra space.",
-            "Free tier. Too many requests. Wait or new key.",
-            "Model ignored the schema. Rare with our prompt.",
-            "That guardrail sentence just saved a fake 80%.",
-        ],
-        20,
+        21,
         total,
+        music=True,
     )
 
-    section_slide(prs, "Block 6", "Architecture — be honest", "45–52 minutes", 21, total)
-
-    two_col(
+    content_slide(
         prs,
-        "45–52 min  ·  layers",
-        "What you actually built",
-        "This classroom demo",
+        "08  ·  quiz  6–10",
+        "Same rules. Last five.",
         [
-            "Frontend: React Native screens + picker",
-            "AI: Gemini generateContent",
-            "Backend: none",
-            "Database: none",
-            "Key: inside the app (.env)",
-        ],
-        "If you shipped this",
-        [
-            "Same UI",
-            "Same Gemini call",
-            "A tiny server holds the key",
-            "Phone calls YOUR server",
-            "Server calls Gemini",
-            "Key never sits in the APK",
+            "6. Which file calls Gemini?   A App.tsx   B src/api/gemini.ts   C Info.plist",
+            "7. React Native lets you?   A One JS/TS app → iOS + Android   B Websites only   C iOS only",
+            "8. Delete “do not invent skills” and green chips may?   A Vanish   B Show skills not on the PDF   C Crash Metro",
+            "9. Free key is created at?   A aistudio.google.com/apikey   B github.com   C npmjs.com",
+            "10. For Play Store you should?   A Keep the key in the APK   B Put the key on your server   C Print it on splash",
         ],
         22,
         total,
+        "Host key: 1B  2B  3B  4A  5A  6B  7A  8B  9A  10B",
+        music=True,
     )
 
-    content_slide(
-        prs,
-        "45–52 min  ·  recap",
-        "Count on your fingers",
+    # 23 winners
+    s = blank(prs)
+    rect(s, 0, 0, W, H, NAVY)
+    rect(s, 0, 0, Inches(0.18), H, BLUE)
+    write_box(
+        s,
+        Inches(0.7),
+        Inches(0.45),
+        Inches(12),
+        Inches(1.2),
         [
-            "1. Call a real AI API  —  fetch + key + JSON.",
-            "2. Prompt engineering  —  role, constraints, output contract.",
-            "3. Render structured output  —  score, chips, numbered edits.",
-            "",
-            "“Frontend → backend → AI” is the production version.",
-            "Today you learned the middle so you could see a full feature.",
+            ("QUIZ WINNERS", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
+            ("Top 3 students take the quiz", 34, True, WHITE),
         ],
-        23,
-        total,
-        "Ask: where would you put the API key if this went to the Play Store?",
     )
+    medals = [
+        ("1st", "Gold", GOLD, "Highest score  ·  walks through one prompt line"),
+        ("2nd", "Silver", SILVER, "Next highest  ·  explains URL + key + JSON"),
+        ("3rd", "Bronze", BRONZE, "Third  ·  names the 3 files"),
+    ]
+    for i, (place, metal, color, prize) in enumerate(medals):
+        x = Inches(0.7) + i * Inches(4.1)
+        round_rect(s, x, Inches(2.1), Inches(3.85), Inches(3.7), WHITE)
+        badge = s.shapes.add_shape(MSO_SHAPE.OVAL, x + Inches(1.45), Inches(2.35), Inches(0.95), Inches(0.95))
+        fill(badge, color)
+        tb = textbox(s, x + Inches(1.45), Inches(2.52), Inches(0.95), Inches(0.7))
+        p = tb.text_frame.paragraphs[0]
+        p.alignment = PP_ALIGN.CENTER
+        run = p.add_run()
+        _set_run(run, place, 16, True, WHITE)
+        write_box(
+            s,
+            x + Inches(0.25),
+            Inches(3.5),
+            Inches(3.35),
+            Inches(2.0),
+            [
+                (metal, 22, True, NAVY),
+                ("Name: ____________________", 16, False, SLATE),
+                (prize, 14, False, SLATE),
+            ],
+        )
+    add_music(s, light=True)
+    footer(s, 23, total)
 
-    section_slide(prs, "Block 7", "Questions", "52–60 minutes", 24, total)
-
-    content_slide(
-        prs,
-        "52–60 min  ·  if the room is quiet",
-        "Seed questions",
-        [
-            "• Why PDF, not Word?  —  one path; Gemini document understanding is built around PDF.",
-            "• Why base64, not Drive?  —  Drive needs login. Base64 = one POST.",
-            "• Shared key for 40 students?  —  quota dies. Each person uses their own free key.",
-            "• Is the score “true”?  —  no. Model opinion under our prompt. Temperature 0.2 keeps it stable.",
-            "• Match 3 jobs?  —  loop analyzeResumeMatch three times.",
-            "• Scanned photo resume?  —  often yes. Prefer a real text PDF for the demo.",
-        ],
-        25,
-        total,
-    )
-
+    # 24 thank you
     s = blank(prs)
     rect(s, 0, 0, W, H, NAVY)
     rect(s, 0, 0, Inches(0.18), H, BLUE)
     if LOGO.exists():
-        s.shapes.add_picture(str(LOGO), Inches(0.75), Inches(1.3), Inches(0.95), Inches(0.95))
+        s.shapes.add_picture(str(LOGO), Inches(0.75), Inches(1.15), Inches(0.95), Inches(0.95))
     write_box(
         s,
         Inches(0.75),
-        Inches(2.5),
+        Inches(2.3),
         Inches(12),
-        Inches(4.2),
+        Inches(4.4),
         [
-            ("Tonight", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
-            ("Clone. Paste your key. Change one prompt line.", 32, True, WHITE),
+            ("THANK YOU", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
+            ("Clone. Paste your key. Change one prompt line.", 30, True, WHITE),
             ("aistudio.google.com/apikey", 22, False, RGBColor(0x93, 0xC5, 0xFD)),
-            ("npm start    then    npm run android   /   npm run ios", 18, False, RGBColor(0xCB, 0xD5, 0xE1)),
-            ("Watch the score move. That is the whole loop.", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
+            ("github.com/Aishwaryaofficial/resume-fit", 18, False, RGBColor(0xCB, 0xD5, 0xE1)),
+            ("npm start    then    npm run ios  /  npm run android", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
+            ("♪ click the note  ·  questions anytime  ·  TEQGRID", 16, False, RGBColor(0x93, 0xC5, 0xFD)),
         ],
     )
-    footer(s, 26, total)
+    add_music(s, light=True)
+    footer(s, 24, total)
 
     prs.save(OUT)
     print(OUT)

@@ -1,34 +1,78 @@
-# ResumeFit
+# 📄 ResumeFit — Resume vs Job Match
 
-React Native CLI app (**not Expo**). Upload a PDF resume, paste a job description, and see how well they match using the **Google Gemini free API**.
-
-There is **no backend**. The phone talks to Gemini directly. That is simpler for a classroom demo. In production you would hide the API key on a server.
-
-| Input | Output |
-| --- | --- |
-| Resume PDF (max 5 MB) + job description text | Score 0–100, matching / missing skills, experience note, 3 resume edits |
-
-Seminar materials: [`SEMINAR.md`](./SEMINAR.md) and [`ResumeFit-Seminar.pptx`](./ResumeFit-Seminar.pptx).
-
-## Screenshots
-
-<p>
-  <img src="docs/screenshots/home.png" alt="Home — upload a PDF and paste a job description" width="260" />
-  <img src="docs/screenshots/home-ready.png" alt="Home — resume selected and sample job description filled" width="260" />
-  <img src="docs/screenshots/result.png" alt="Result — match score, summary, and matching skills" width="260" />
-  <img src="docs/screenshots/result-skills.png" alt="Result — missing skills and suggested resume edits" width="260" />
+<p align="center">
+  <img src="src/assets/logo.png" alt="ResumeFit logo" width="120" />
 </p>
 
-| Screen | What it shows |
-| --- | --- |
-| Home | Empty upload card + job box + **Analyze match** |
-| Home (ready) | Selected PDF + sample junior React Native JD |
-| Result | 0–100 score, summary, experience alignment |
-| Result (skills) | Matching / missing skill chips + 3 suggested edits |
+<p align="center">
+  <img src="https://img.shields.io/badge/React_Native-0.87-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/TypeScript-5.x-3178C6?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Gemini-Free_API-4285F4?style=for-the-badge&logo=google&logoColor=white" />
+  <img src="https://img.shields.io/badge/Platform-iOS%20%7C%20Android-lightgrey?style=for-the-badge" />
+</p>
+
+> Upload a PDF resume, paste a job description, and see how well they match — score, skills, and three concrete resume edits. Built with React Native CLI (**not Expo**) and the **Google Gemini free API**. No backend.
 
 ---
 
-## Architecture
+## 📸 Screenshots
+
+
+  
+
+<p>
+  <img src="docs/screenshots/home.png" alt="Home — upload a PDF and paste a job description" width="200" />
+  <img src="docs/screenshots/home-ready.png" alt="Home — resume selected and sample job description filled" width="200" />
+  <img src="docs/screenshots/result.png" alt="Result — match score, summary, and matching skills" width="200" />
+  <img src="docs/screenshots/result-skills.png" alt="Result — missing skills and suggested resume edits" width="200" /> 
+  </p>
+
+| 🏠 Home | ✅ Home (ready) | 📊 Result | 💡 Result (skills) |
+|:-:|:-:|:-:|:-:|
+| Upload card + job box | Selected PDF + sample JD | Score, summary, alignment | Skill chips + 3 edits |
+
+---
+
+## 🎯 Problem it solves
+
+Applying for a job usually means a human opens your PDF and the job post, then decides “this person fits” or “this person is missing React Native.” ResumeFit automates that on a phone:
+
+- 📄 Resume PDF in
+- 📝 Job text in
+- 🎯 Match out (0–100, matching / missing skills, 3 edits)
+
+There is **no backend**. The phone talks to Gemini directly. In production you would hide the API key on a server.
+
+---
+
+## ✨ Features
+
+| Screen | What it does |
+|--------|-------------|
+| 🏠 **Home** | Pick a PDF (5 MB max), paste a JD or tap **Use sample**, tap **Analyze match** |
+| 📊 **Result** | Score bar, summary, experience alignment, green/red skill chips, 3 suggested edits |
+
+- 📎 PDF only — Word files are rejected
+- 🤖 Real Gemini analysis — no mock scores
+- 🧪 Sample junior React Native JD for a live demo
+- 🎓 Teaching script and slide deck in the repo
+
+Seminar materials: [`SEMINAR.md`](./SEMINAR.md) · [`ResumeFit-Seminar.pptx`](./ResumeFit-Seminar.pptx)
+
+---
+
+## 🛠️ Tech stack
+
+- **React Native 0.87** — CLI, iOS + Android
+- **TypeScript** — shared types for navigation, picker, and Gemini JSON
+- **React Navigation 7** — native stack (`Home` → `Result`)
+- **@react-native-documents/picker** — system PDF picker + `keepLocalCopy`
+- **Google Gemini 2.0 Flash** — `generateContent` with PDF `inline_data`
+- **react-native-dotenv** — `GEMINI_API_KEY` from `.env` at build time
+
+---
+
+## 🏗️ Architecture
 
 ```
 Phone: pick PDF + paste job description
@@ -44,18 +88,18 @@ parseModelJson → ResumeAnalysis
 Result screen
 ```
 
-The screens never talk HTTP. They call helpers in `src/api/`. Gemini is treated like any other REST API: **URL, key, request, response, error, quota**.
+Screens never talk HTTP. They call helpers in `src/api/`. Gemini is treated like any other REST API: **URL, key, request, response, error, quota**.
 
-### Request shape
+### 📨 Request
 
-One `generateContent` call with two parts in the same message:
+One `generateContent` call with two parts:
 
-1. **Text** — recruiter prompt + the job description. The prompt asks for JSON only, with exact keys the Result screen already renders.
+1. **Text** — recruiter prompt + job description. Asks for JSON only, with the keys Result already renders.
 2. **PDF** — `inline_data` with `mime_type: application/pdf` and base64 bytes.
 
-Model: `gemini-2.0-flash`. Temperature `0.2` so live-demo scores stay consistent. `responseMimeType` is `application/json`. The parser still strips markdown fences (` ```json `) because models sometimes wrap the payload anyway.
+Model: `gemini-2.0-flash`. Temperature `0.2`. `responseMimeType` is `application/json`. The parser still strips markdown fences (` ```json `).
 
-### Response shape (`ResumeAnalysis`)
+### 📦 Response (`ResumeAnalysis`)
 
 ```ts
 {
@@ -68,7 +112,7 @@ Model: `gemini-2.0-flash`. Temperature `0.2` so live-demo scores stay consistent
 }
 ```
 
-### Why this folder layout
+### 📁 Folder layout
 
 ```
 App.tsx                         # Gesture + SafeArea wrappers
@@ -82,204 +126,150 @@ src/
     ResultScreen.tsx            # render ResumeAnalysis
   components/                   # Logo, MatchScore, SkillChips
   navigation/index.tsx          # native stack: Home → Result
-  types/index.ts                # shared TS types (one source of truth)
-  constants/sampleJob.ts        # demo JD for “Use sample JD”
+  types/index.ts                # shared TS types
+  constants/sampleJob.ts        # demo JD
   theme/index.ts                # colors, spacing, radius
 android/  ios/                  # native projects (React Native CLI)
 .env.example                    # GEMINI_API_KEY=  (copy to .env, never commit)
 ```
 
 | File | Responsibility |
-| --- | --- |
-| `src/api/pickResume.ts` | `@react-native-documents/picker` — PDF only, `keepLocalCopy` so the URI does not expire |
+|------|----------------|
+| `src/api/pickResume.ts` | PDF picker + `keepLocalCopy` so the URI does not expire |
 | `src/api/gemini.ts` | All Gemini work. Screens do not know HTTP details |
-| `src/screens/HomeScreen.tsx` | Product glue: pick → validate → base64 → analyze → navigate |
-| `src/screens/ResultScreen.tsx` | Display only. Receives `analysis` + `fileName` as route params |
+| `src/screens/HomeScreen.tsx` | Pick → validate → base64 → analyze → navigate |
+| `src/screens/ResultScreen.tsx` | Display only. Receives `analysis` + `fileName` |
 | `src/types/index.ts` | `ResumeAnalysis`, `PickedResume`, `RootStackParamList` |
 
-### Analyze flow (Home)
+### 🔄 Analyze flow
 
-1. User picks a PDF. Word files are rejected. Files over **5 MB** are rejected (the whole PDF rides in the JSON body).
-2. User pastes a JD or taps **Use sample JD**.
-3. Home checks: resume present, JD not empty, `GEMINI_API_KEY` present.
-4. `uriToBase64` reads the local file and strips the `data:...;base64,` prefix.
-5. `analyzeResumeMatch` POSTs to Gemini. Google’s error message (quota, bad key, safety) is shown as-is.
-6. `parseModelJson` clamps the score and fills missing arrays so the UI cannot crash on `undefined`.
-7. Navigation opens **Result** with the typed payload.
+1. User picks a PDF. Word files and files over **5 MB** are rejected.
+2. User pastes a JD or taps **Use sample**.
+3. Home checks: resume, JD, and `GEMINI_API_KEY`.
+4. `uriToBase64` reads the file and strips the `data:...;base64,` prefix.
+5. `analyzeResumeMatch` POSTs to Gemini. Google’s error (quota, bad key, safety) is shown as-is.
+6. `parseModelJson` clamps the score and fills missing arrays.
+7. Navigation opens **Result**.
 
-### Secrets
+### 🔐 Secrets
 
-`react-native-dotenv` injects `.env` as `@env` at **build** time (`babel.config.js`). Changing the key requires a Metro restart / rebuild. `.env` is gitignored. Commit only `.env.example`.
+`react-native-dotenv` injects `.env` as `@env` at **build** time. Changing the key requires a Metro restart. `.env` is gitignored. Commit only `.env.example`.
 
 ---
 
-## Prerequisites
+## 🚀 Getting started
+
+### ✅ Prerequisites
 
 - Node **22.11+**
-- npm
 - [React Native 0.87 environment](https://reactnative.dev/docs/set-up-your-environment)
-  - **Android:** JDK 17+, Android Studio, SDK, a device or emulator
-  - **iOS (macOS):** Xcode, CocoaPods (`bundle exec pod install`)
+  - **Android:** JDK 17+, Android Studio, SDK
+  - **iOS (macOS):** Xcode, CocoaPods
 - A free Gemini key from [Google AI Studio](https://aistudio.google.com/apikey)
 
----
-
-## Setup
-
-From the project root:
-
-### 1. Clone and install JavaScript deps
+### 💻 Installation
 
 ```bash
-git clone https://github.com/teqgrid/resume-fit.git
+git clone https://github.com/Aishwaryaofficial/resume-fit.git
 cd resume-fit
 npm install
-```
 
-### 2. Add your Gemini key
-
-```bash
 cp .env.example .env
-```
+# edit .env: GEMINI_API_KEY=your_key_here  (no quotes)
 
-Edit `.env` (no quotes):
-
-```
-GEMINI_API_KEY=your_key_here
-```
-
-Restart Metro after any `.env` change.
-
-### 3. iOS pods (macOS only)
-
-```bash
+# iOS
 bundle install
 cd ios && bundle exec pod install && cd ..
-```
 
----
-
-## Run on a simulator / emulator
-
-Terminal 1 — Metro:
-
-```bash
 npm start
-```
-
-Terminal 2:
-
-```bash
+# in another terminal
 npm run ios
 # or
 npm run android
 ```
 
----
-
-## Run on a real phone
-
-Keep the phone on the **same Wi‑Fi as the Mac**, or use USB. Metro must stay running.
-
-### Android (USB)
-
-On the phone:
-
-1. Settings → About phone → tap **Build number** 7 times.
-2. Developer options → **USB debugging** on.
-3. Plug in USB. Tap **Allow** / File transfer (MTP).
-
-On the computer:
-
-```bash
-adb devices          # must show a device id
-npm start            # leave this running
-```
-
-In another terminal:
-
-```bash
-adb reverse tcp:8081 tcp:8081
-npm run android
-```
-
-`adb reverse` lets the phone reach Metro on the computer over USB.
-
-### iPhone (USB + Xcode signing)
-
-You need a free Apple ID signed into Xcode.
-
-1. Plug in the iPhone. Unlock. Tap **Trust**.
-2. Settings → Privacy & Security → **Developer Mode** → On (restart if asked).
-3. Xcode → Settings → Accounts → add your Apple ID.
-4. Open `ios/ResumeFit.xcworkspace` (the **workspace**, not `.xcodeproj`).
-5. ResumeFit target → Signing & Capabilities → **Automatically manage signing** → choose your Team.
-6. Pick the physical iPhone as the run destination. Press Run.
-7. On the phone: Settings → General → VPN & Device Management → trust your Apple ID.
-
-Then, with Metro already running:
-
-```bash
-npx react-native run-ios --device
-```
-
-Allow **Local Network** the first time so the app can load JS from the Mac.
-
-### Red box: “Could not connect to Metro”
-
-- Android: `adb reverse tcp:8081 tcp:8081`, then shake → Reload.
-- iPhone: same Wi‑Fi, allow Local Network, shake → Reload.
-- Confirm Metro is running: `npm start` in the project folder.
+Restart Metro after any `.env` change.
 
 ---
 
-## Try the app
+## 📱 Run on a real phone
 
-1. Tap **Choose PDF** and pick a resume.
-2. Keep or replace the sample job description (**Use sample JD**).
+Keep the phone on the **same Wi‑Fi as the computer**, or use USB. Metro must stay running.
+
+### 🤖 Android (USB)
+
+1. Enable **Developer options** → **USB debugging**.
+2. Plug in USB. Tap **Allow**.
+3. Confirm the device: `adb devices`
+4. `adb reverse tcp:8081 tcp:8081`
+5. `npm run android`
+
+### 🍎 iPhone (USB + Xcode)
+
+1. Plug in, unlock, tap **Trust**. Turn on **Developer Mode** if asked.
+2. Xcode → Settings → Accounts → add your Apple ID.
+3. Open `ios/ResumeFit.xcworkspace` (the **workspace**, not `.xcodeproj`).
+4. Signing & Capabilities → **Automatically manage signing** → choose your Team.
+5. Run on the physical iPhone. Trust the developer certificate on the phone.
+6. `npx react-native run-ios --device`
+
+Allow **Local Network** the first time so JS can load from the computer.
+
+### 🔴 “Could not connect to Metro”
+
+- Android: `adb reverse tcp:8081 tcp:8081`, then shake → Reload
+- iPhone: same Wi‑Fi, allow Local Network, shake → Reload
+- Confirm Metro is running: `npm start`
+
+---
+
+## ▶️ Try the app
+
+1. Tap **Upload resume** and pick a PDF.
+2. Paste a job post or tap **Use sample**.
 3. Tap **Analyze match**.
 4. Result shows a 0–100 score, matching / missing skills, experience alignment, and 3 suggested edits.
 
 ---
 
-## Tests
+## 🧪 Tests
 
 ```bash
 npm test
+npm run lint
 ```
 
 | Test | What it proves |
-| --- | --- |
+|------|----------------|
 | `__tests__/App.test.tsx` | App mounts (gesture-handler and navigator are mocked) |
 | `__tests__/gemini.test.ts` | `parseModelJson` strips ```json fences |
 | `__tests__/gemini.test.ts` | `matchPercent` of `140` is clamped to `100` |
 
 Jest maps `@env` to `__mocks__/env.js` so tests do not read a real key.
 
-Lint:
-
-```bash
-npm run lint
-```
-
 ---
 
-## Classroom notes
-
-- PDF only, max 5 MB. Each student should use their **own** Gemini key.
-- Do not commit `.env` or ship a public app with a hardcoded key.
-- Gemini free-tier rate limits are fine for a demo, not for a production ATS.
-- If Gemini wraps JSON in markdown fences, the app strips them before parsing.
-- Teaching script: [`SEMINAR.md`](./SEMINAR.md). Open these four files with students: `src/api/gemini.ts`, `src/api/pickResume.ts`, `src/screens/HomeScreen.tsx`, `src/screens/ResultScreen.tsx`.
-
----
-
-## Scripts
+## 📜 Scripts
 
 | Command | What it does |
-| --- | --- |
+|---------|--------------|
 | `npm start` | Metro bundler |
 | `npm run android` | Build and run on Android |
 | `npm run ios` | Build and run on iOS |
 | `npm test` | Jest |
 | `npm run lint` | ESLint |
+
+---
+
+## 📝 Notes
+
+- PDF only, max 5 MB. Each person should use their **own** Gemini key.
+- Do not commit `.env` or ship a public app with a hardcoded key.
+- Gemini free-tier rate limits are fine for a demo, not for a production ATS.
+- Teaching script: [`SEMINAR.md`](./SEMINAR.md). Open `src/api/gemini.ts`, `src/api/pickResume.ts`, `src/screens/HomeScreen.tsx`, `src/screens/ResultScreen.tsx`.
+
+---
+
+## 📄 License
+
+MIT — free to use, fork, and learn from.

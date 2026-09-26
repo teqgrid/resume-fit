@@ -19,6 +19,7 @@ import {useNavigation} from '@react-navigation/native';
 import {RootStackParamList} from '../types';
 import {pickResumePdf} from '../api/pickResume';
 import {
+  GEMINI_MODEL,
   MAX_RESUME_BYTES,
   analyzeResumeMatch,
   getGeminiApiKey,
@@ -115,6 +116,9 @@ const HomeScreen = () => {
           <Logo size="lg" stacked />
           <Text style={styles.title}>See if you fit the role</Text>
           <Text style={styles.subtitle}>PDF in. Job text in. Match out.</Text>
+          <View style={styles.modelChip}>
+            <Text style={styles.modelChipText}>Model  ·  {GEMINI_MODEL}</Text>
+          </View>
         </View>
 
         {/* Step 1 card — dashed until a file is chosen */}
@@ -223,6 +227,18 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     textAlign: 'center',
+  },
+  modelChip: {
+    marginTop: Spacing.md,
+    backgroundColor: Colors.primaryLight,
+    borderRadius: Radius.full,
+    paddingHorizontal: Spacing.md,
+    paddingVertical: 6,
+  },
+  modelChipText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: Colors.primaryDark,
   },
   upload: {
     backgroundColor: Colors.surface,

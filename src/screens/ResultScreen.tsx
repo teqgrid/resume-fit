@@ -9,6 +9,7 @@ import {RootStackParamList} from '../types';
 import MatchScore from '../components/MatchScore';
 import SkillChips from '../components/SkillChips';
 import Logo from '../components/Logo';
+import {GEMINI_MODEL} from '../api/gemini';
 import {Colors, Radius, Spacing} from '../theme';
 
 // Props include navigation (goBack) and route.params from Home.
@@ -34,6 +35,7 @@ const ResultScreen = ({navigation, route}: Props) => {
       </View>
       <Text style={styles.title}>Match result</Text>
       <Text style={styles.fileName}>{fileName}</Text>
+      <Text style={styles.modelLine}>Scored by  ·  {GEMINI_MODEL}</Text>
 
       {/* Big number + color bar from analysis.matchPercent */}
       <View style={styles.block}>
@@ -109,6 +111,12 @@ const styles = StyleSheet.create({
     marginTop: Spacing.xs,
     color: Colors.textSecondary,
     fontSize: 14,
+  },
+  modelLine: {
+    marginTop: 6,
+    color: Colors.primaryDark,
+    fontSize: 13,
+    fontWeight: '700',
   },
   block: {
     marginTop: Spacing.xl,

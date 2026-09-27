@@ -8,7 +8,7 @@ import {ResumeAnalysis} from '../types';
 export const MAX_RESUME_BYTES = 5 * 1024 * 1024;
 
 // Flash = fast + cheap. Good for a classroom demo.
-const GEMINI_MODEL = 'gemini-2.0-flash';
+export const GEMINI_MODEL = 'gemini-3.1-flash-lite';
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 
 // This prompt IS the product logic.

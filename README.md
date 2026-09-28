@@ -170,7 +170,7 @@ android/  ios/                  # native projects (React Native CLI)
 ### 💻 Installation
 
 ```bash
-git clone https://github.com/Aishwaryaofficial/resume-fit.git
+git clone https://github.com/teqgrid/resume-fit.git
 cd resume-fit
 npm install
 

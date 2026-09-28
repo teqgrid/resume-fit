@@ -14,6 +14,7 @@ OUT = ROOT / "ResumeFit-Seminar.pptx"
 LOGO = ROOT / "src" / "assets" / "logo.png"
 MUSIC = ROOT / "docs" / "seminar-music.mp3"
 GEMINI_DOCS_SHOT = ROOT / "docs" / "gemini-api-key-docs.png"
+QUIZ_QR = ROOT / "docs" / "quiz-qr.jpg"
 
 GEMINI_KEY_URL = "https://aistudio.google.com/apikey"
 GEMINI_DOCS_URL = "https://ai.google.dev/gemini-api/docs/api-key"
@@ -86,7 +87,7 @@ def footer(slide, page, total):
     box = textbox(slide, Inches(0.4), Inches(7.22), Inches(10), Inches(0.28))
     p = box.text_frame.paragraphs[0]
     run = p.add_run()
-    _set_run(run, "ResumeFit  ·  TEQGRID seminar", 11, False, WHITE)
+    _set_run(run, "Meet TEQGRID  ·  ResumeFit seminar", 11, False, WHITE)
     num = textbox(slide, Inches(11.6), Inches(7.22), Inches(1.4), Inches(0.28))
     p = num.text_frame.paragraphs[0]
     p.alignment = PP_ALIGN.RIGHT
@@ -140,10 +141,11 @@ def title_slide(prs):
         Inches(4.2),
         [
             ("TEQGRID  ·  HANDS-ON SEMINAR", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
-            ("ResumeFit", 54, True, WHITE),
-            ("Match a resume to a job with a real AI API", 26, False, RGBColor(0xCB, 0xD5, 0xE1)),
+            ("Meet TEQGRID", 54, True, WHITE),
+            ("ResumeFit  ·  match a resume to a job with a real AI API", 22, False, RGBColor(0xCB, 0xD5, 0xE1)),
             ("React Native + Google Gemini  ·  live on a phone", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
-            ("Click ♪ on this slide for music", 16, False, RGBColor(0x93, 0xC5, 0xFD)),
+            ("Click ♪ for flute  ·  Bach Siciliano", 16, False, RGBColor(0x93, 0xC5, 0xFD)),
+            ("Alex Murray & Martha Goldstein  ·  CC BY-SA", 13, False, RGBColor(0x94, 0xA3, 0xB8)),
         ],
     )
     add_music(s, light=True)
@@ -453,6 +455,39 @@ def gemini_key_diagram_slide(prs, page, total):
     footer(s, page, total)
 
 
+def quiz_qr_slide(prs, page, total):
+    """Quiz intro: Meet TEQGRID + scan the supplied QR."""
+    s = blank(prs)
+    rect(s, 0, 0, W, H, NAVY)
+    rect(s, 0, 0, Inches(0.18), H, BLUE)
+    write_box(
+        s,
+        Inches(0.7),
+        Inches(0.7),
+        Inches(7.2),
+        Inches(5.8),
+        [
+            ("08  ·  QUIZ", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
+            ("Meet TEQGRID", 48, True, WHITE),
+            ("Scan the QR and take the 10-question quiz", 22, False, RGBColor(0xCB, 0xD5, 0xE1)),
+            ("Phones up  ·  one scan each  ·  top 3 win", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
+        ],
+    )
+    if QUIZ_QR.exists():
+        round_rect(s, Inches(8.2), Inches(1.2), Inches(4.5), Inches(4.5), WHITE)
+        s.shapes.add_picture(str(QUIZ_QR), Inches(8.4), Inches(1.4), Inches(4.1), Inches(4.1))
+    write_box(
+        s,
+        Inches(8.35),
+        Inches(5.7),
+        Inches(4.2),
+        Inches(0.7),
+        [("Scan to start the quiz", 16, True, RGBColor(0x93, 0xC5, 0xFD))],
+    )
+    add_music(s, light=True)
+    footer(s, page, total)
+
+
 def build():
     prs = Presentation()
     prs.slide_width = W
@@ -475,7 +510,7 @@ def build():
         ("05", "Google API key", "Create your own Gemini key"),
         ("06", "How the app works", "PDF + JD → score"),
         ("07", "Student Q&A", "Your questions"),
-        ("08", "10-question quiz", "Top 3 win"),
+        ("08", "10-question quiz", "Scan the QR  ·  top 3 win"),
         ("09", "Thank you", "♪ music on title, quiz, winners"),
     ]
     y = Inches(1.28)
@@ -723,7 +758,7 @@ def build():
     )
 
     # 20 quiz intro
-    section_slide(prs, "08", "10-question test", "Write A / B / C  ·  no phones", 20, total, music=True)
+    quiz_qr_slide(prs, 20, total)
 
     content_slide(
         prs,
@@ -796,7 +831,6 @@ def build():
             Inches(2.0),
             [
                 (metal, 22, True, NAVY),
-                ("Name: ____________________", 16, False, SLATE),
                 (prize, 14, False, SLATE),
             ],
         )
@@ -819,7 +853,7 @@ def build():
             ("THANK YOU", 16, True, RGBColor(0x93, 0xC5, 0xFD)),
             ("Clone. Paste your key. Change one prompt line.", 30, True, WHITE),
             ("aistudio.google.com/apikey", 22, False, RGBColor(0x93, 0xC5, 0xFD)),
-            ("github.com/Aishwaryaofficial/resume-fit", 18, False, RGBColor(0xCB, 0xD5, 0xE1)),
+            ("github.com/teqgrid/resume-fit", 18, False, RGBColor(0xCB, 0xD5, 0xE1)),
             ("npm start    then    npm run ios  /  npm run android", 18, False, RGBColor(0x94, 0xA3, 0xB8)),
             ("♪ click the note  ·  questions anytime  ·  TEQGRID", 16, False, RGBColor(0x93, 0xC5, 0xFD)),
         ],
